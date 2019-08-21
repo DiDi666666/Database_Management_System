@@ -1,80 +1,81 @@
-¡¾µÚÒ»Ìâ¡¿
-delimiter //    --¸Ä±ä½áÊø·ûÎª//
+delimiter //    --æ”¹å˜ç»“æŸç¬¦ä¸º//
 
-create procedure show_products()    --ÏÔÊ¾products±íÈ«²¿Êı¾İ
+create procedure show_products()    --æ˜¾ç¤ºproductsè¡¨å…¨éƒ¨æ•°æ®
 begin
-  select * from products;  --sqlÓï¾äÏÔÊ¾±íÖĞËùÓĞÊı¾İ
+  select * from products;  --sqlè¯­å¥æ˜¾ç¤ºè¡¨ä¸­æ‰€æœ‰æ•°æ®
 end //
 
-create procedure show_customers()   --ÏÔÊ¾customers±íÈ«²¿Êı¾İ
+create procedure show_customers()   --æ˜¾ç¤ºcustomersè¡¨å…¨éƒ¨æ•°æ®
 begin
   select * from customers;
 end //
 
-create procedure show_employees()  --ÏÔÊ¾employees±íÈ«²¿Êı¾İ
+create procedure show_employees()  --æ˜¾ç¤ºemployeesè¡¨å…¨éƒ¨æ•°æ®
 begin
   select * from employees;
 end //
 
-create procedure show_purchases()  --ÏÔÊ¾purchases±íÈ«²¿Êı¾İ
+create procedure show_purchases()  --æ˜¾ç¤ºpurchasesè¡¨å…¨éƒ¨æ•°æ®
 begin
   select * from purchases;
 end //
 
-create procedure show_suppliers()  --ÏÔÊ¾suppliers±íÈ«²¿Êı¾İ
+create procedure show_suppliers()  --æ˜¾ç¤ºsuppliersè¡¨å…¨éƒ¨æ•°æ®
 begin
   select * from suppliers;
 end //
 
-create procedure show_logs()   --ÏÔÊ¾logs±íÈ«²¿Êı¾İ
+create procedure show_logs()   --æ˜¾ç¤ºlogsè¡¨å…¨éƒ¨æ•°æ®
 begin
   select * from logs;
 end //
 
-delimiter ;              --½«½áÊø·û¸ÄÎª;
+delimiter ;              --å°†ç»“æŸç¬¦æ”¹ä¸º;
 
 
-¡¾µÚ¶şÌâ¡¿
-¹ı³Ì´úÂë£º
+
+
+
 delimiter //  
 
-create procedure report_sale(in prod_id varchar(4))  --ÏÔÊ¾Ä³²úÆ·Ã¿¸öÔÂµÄÏúÊÛĞÅÏ¢ 
+create procedure report_sale(in prod_id varchar(4))  --æ˜¾ç¤ºæŸäº§å“æ¯ä¸ªæœˆçš„é”€å”®ä¿¡æ¯ 
 begin
   
 select pur.pid,pro.pname,
   DATE_FORMAT(pur.ptime,'%b') as month,year(pur.ptime) as year, 
-  --DATE_FORMAT(pur.ptime,'%b')¿ÉÒÔÏÔÊ¾ÔÂ·İµÄÓ¢ÎÄËõĞ´
+  --DATE_FORMAT(pur.ptime,'%b')å¯ä»¥æ˜¾ç¤ºæœˆä»½çš„è‹±æ–‡ç¼©å†™
   sum(pur.qty) as total_quantity,
 sum(pur.total_price) as total_price,
   
-  sum(pur.total_price)/sum(pur.qty) as average_price  --sumÎªÇóºÍ¹«Ê½
+  sum(pur.total_price)/sum(pur.qty) as average_price  --sumä¸ºæ±‚å’Œå…¬å¼
   
 from purchases pur,products pro
   where pur.pid= prod_id 
-and pro.pid = prod_id  --Ê¹ÓÃ²ÎÊıÔ¼¶¨Ìõ¼ş
+and pro.pid = prod_id  --ä½¿ç”¨å‚æ•°çº¦å®šæ¡ä»¶
   group by month(pur.ptime),year(pur.ptime) 
-    --°´ÕÕÏàÍ¬ÄêÔÂ·Ö×é
+    --æŒ‰ç…§ç›¸åŒå¹´æœˆåˆ†ç»„
   order by year(pur.ptime),month(pur.ptime);
-    --°´ÕÕÄêÔÂÅÅĞò
+    --æŒ‰ç…§å¹´æœˆæ’åº
 end //
 
 delimiter ;
 
 
 
-¡¾µÚÈıÌâ¡¿
+
+
 delimiter //
 
 create procedure add_purchases(in pur_no varchar(4),in c_id varchar(4),in e_id varchar(3),in p_id varchar(4),in pur_qty int(5))
 begin
-  declare price decimal(6,2);  --ÉùÃ÷±äÁ¿price´æ·Å´Óproducts±íÖĞ²é³öµÄoriginal_price
-  declare rate decimal(3,2);   --ÉùÃ÷±äÁ¿rate´æ·Å´Óproducts±íÖĞ²é³öµÄdiscnt_rate
-  declare total decimal(7,2);  --ÉùÃ÷±äÁ¿total´æ·Å¼ÆËã³öµÄ×Ü¼Û¸ñ£¬ÇÒ¸Ã±äÁ¿×÷Îªtotal_price²åÈëpurchases±íÖĞ
-  select original_price into price from products where pid=p_id;  --´Óproducts±íÖĞ²éÕÒoriginal_price´æÈëprice
-  select discnt_rate into rate from products where pid=p_id;      --´Óproducts±íÖĞ²éÕÒdiscnt_rate´æÈërate
-  set total=price*pur_qty*rate;  --¼ÆËã×Ü¼Û¸ñ=µ¥¼Û*¹ºÂòÊıÁ¿*ÕÛ¿Û
+  declare price decimal(6,2);  --å£°æ˜å˜é‡priceå­˜æ”¾ä»productsè¡¨ä¸­æŸ¥å‡ºçš„original_price
+  declare rate decimal(3,2);   --å£°æ˜å˜é‡rateå­˜æ”¾ä»productsè¡¨ä¸­æŸ¥å‡ºçš„discnt_rate
+  declare total decimal(7,2);  --å£°æ˜å˜é‡totalå­˜æ”¾è®¡ç®—å‡ºçš„æ€»ä»·æ ¼ï¼Œä¸”è¯¥å˜é‡ä½œä¸ºtotal_priceæ’å…¥purchasesè¡¨ä¸­
+  select original_price into price from products where pid=p_id;  --ä»productsè¡¨ä¸­æŸ¥æ‰¾original_priceå­˜å…¥price
+  select discnt_rate into rate from products where pid=p_id;      --ä»productsè¡¨ä¸­æŸ¥æ‰¾discnt_rateå­˜å…¥rate
+  set total=price*pur_qty*rate;  --è®¡ç®—æ€»ä»·æ ¼=å•ä»·*è´­ä¹°æ•°é‡*æŠ˜æ‰£
   insert into purchases(pur,cid,eid,pid,qty,ptime,total_price)
-  values(pur_no,c_id, e_id, p_id, pur_qty,now(),total); --½«Êı¾İ²åÈëpurchases±íÖĞ
+  values(pur_no,c_id, e_id, p_id, pur_qty,now(),total); --å°†æ•°æ®æ’å…¥purchasesè¡¨ä¸­
 end //
 
 create procedure add_products(in p_id varchar(4),in p_name varchar(15),in p_qoh int(5),in p_qoh_thr int(5),in p_price decimal(6,2),in p_rate decimal(3,2),in s_id varchar(2))
@@ -86,64 +87,74 @@ end //
 delimiter ;
 
 
-¡¾µÚËÄÌâ¡¿
+
+
+
+
 delimiter //
 
-create trigger after_insert_purchases  --´´½¨Ïòpurchases±íÖĞ²åÈëĞÂÊı¾İºóĞÂÔöÈÕÖ¾¼ÇÂ¼µÄ´¥·¢Æ÷
+create trigger after_insert_purchases  --åˆ›å»ºå‘purchasesè¡¨ä¸­æ’å…¥æ–°æ•°æ®åæ–°å¢æ—¥å¿—è®°å½•çš„è§¦å‘å™¨
 after insert on purchases for each row
 begin
   insert into logs(who,time,table_name,operation,key_value)
-  values(user(),now(),'purchases','insert',new.pur); --²åÈëÈÕÖ¾¼ÇÂ¼
+  values(user(),now(),'purchases','insert',new.pur); --æ’å…¥æ—¥å¿—è®°å½•
 end //
 
-create trigger update_products_qoh --´´½¨¸üĞÂproducts±íÖĞµÄqohÊôĞÔºóĞÂÔöÈÕÖ¾¼ÇÂ¼µÄ´¥·¢Æ÷
+create trigger update_products_qoh --åˆ›å»ºæ›´æ–°productsè¡¨ä¸­çš„qohå±æ€§åæ–°å¢æ—¥å¿—è®°å½•çš„è§¦å‘å™¨
 after update on products for each row
 begin
-  if old.qoh<>new.qoh then  --Ìõ¼ş£ºµ±qoh±»¸üĞÂ
+  if old.qoh<>new.qoh then  --æ¡ä»¶ï¼šå½“qohè¢«æ›´æ–°
   insert into logs(who,time,table_name,operation,key_value)
-  values(user(),now(),'products','update',new.pid);  --²åÈëÈÕÖ¾¼ÇÂ¼
+  values(user(),now(),'products','update',new.pid);  --æ’å…¥æ—¥å¿—è®°å½•
   end if;
 end //
 
-create trigger update_customers_vm  --´´½¨¸üĞÂcustomers±íÖĞµÄvisits_madeÊôĞÔºóĞÂÔöÈÕÖ¾¼ÇÂ¼µÄ´¥·¢Æ÷
+create trigger update_customers_vm  --åˆ›å»ºæ›´æ–°customersè¡¨ä¸­çš„visits_madeå±æ€§åæ–°å¢æ—¥å¿—è®°å½•çš„è§¦å‘å™¨
 after update on customers for each row
 begin
-  if old.visits_made<>new.visits_made then  --Ìõ¼ş£ºµ±visits_made±»¸üĞÂ
+  if old.visits_made<>new.visits_made then  --æ¡ä»¶ï¼šå½“visits_madeè¢«æ›´æ–°
   insert into logs(who,time,table_name,operation,key_value)
-  values(user(),now(),'customers','update',new.cid); --²åÈëÈÕÖ¾¼ÇÂ¼
+  values(user(),now(),'customers','update',new.cid); --æ’å…¥æ—¥å¿—è®°å½•
   end if;
 end //
 
 delimiter ;
 
 
-¡¾µÚÎåÌâ¡¿
-create TABLE error(error_hint varchar(30));  //´´½¨ÁÙÊ±±íÓÃÓÚ´æ·Å´íÎóĞÅÏ¢
+
+
+
+
+
+create TABLE error(error_hint varchar(30));  //åˆ›å»ºä¸´æ—¶è¡¨ç”¨äºå­˜æ”¾é”™è¯¯ä¿¡æ¯
 
 delimiter //
-create procedure add_purchases(in pur_no varchar(4),in c_id varchar(4),in e_id varchar(3),in p_id varchar(4),in pur_qty int(5),out error int(1)) --errorÎª´íÎó±êÖ¾Î»£¬Êä³öµ½Ç°¶ËÅĞ¶¨ÊÇ·ñÏÔÊ¾´íÎóÌáÊ¾¡£
+create procedure add_purchases(in pur_no varchar(4),in c_id varchar(4),in e_id varchar(3),in p_id varchar(4),in pur_qty int(5),out error int(1)) --errorä¸ºé”™è¯¯æ ‡å¿—ä½ï¼Œè¾“å‡ºåˆ°å‰ç«¯åˆ¤å®šæ˜¯å¦æ˜¾ç¤ºé”™è¯¯æç¤ºã€‚
 begin
-  declare p_qoh int(5);        --ÉùÃ÷±äÁ¿p_qoh´æ·Å´Óproducts±íÖĞ²é³öµÄqoh
-  declare price decimal(6,2);  --ÉùÃ÷±äÁ¿price´æ·Å´Óproducts±íÖĞ²é³öµÄoriginal_price
-  declare rate decimal(3,2);   --ÉùÃ÷±äÁ¿rate´æ·Å´Óproducts±íÖĞ²é³öµÄdiscnt_rate
-  declare total decimal(7,2);  --ÉùÃ÷±äÁ¿total´æ·Å¼ÆËã³öµÄ×Ü¼Û¸ñ£¬ÇÒ¸Ã±äÁ¿×÷Îªtotal_price²åÈëpurchases±íÖĞ
-  set error=0;  --´íÎó±êÖ¾Î»³õÊ¼»¯Îª0,¼´Ã»ÓĞ´íÎó
-  select qoh into p_qoh from products where pid=p_id;  --´Óproducts±íÖĞ²éÕÒqoh´æÈëp_qoh
-  if pur_qty>p_qoh then     --Èô¹ºÂòÊıÁ¿´óÓÚ¿â´æÊıÁ¿£¬½«´íÎó±êÖ¾Î»ÉèÖÃÎª1£¬¼´³öÏÖ´íÎó
+  declare p_qoh int(5);        --å£°æ˜å˜é‡p_qohå­˜æ”¾ä»productsè¡¨ä¸­æŸ¥å‡ºçš„qoh
+  declare price decimal(6,2);  --å£°æ˜å˜é‡priceå­˜æ”¾ä»productsè¡¨ä¸­æŸ¥å‡ºçš„original_price
+  declare rate decimal(3,2);   --å£°æ˜å˜é‡rateå­˜æ”¾ä»productsè¡¨ä¸­æŸ¥å‡ºçš„discnt_rate
+  declare total decimal(7,2);  --å£°æ˜å˜é‡totalå­˜æ”¾è®¡ç®—å‡ºçš„æ€»ä»·æ ¼ï¼Œä¸”è¯¥å˜é‡ä½œä¸ºtotal_priceæ’å…¥purchasesè¡¨ä¸­
+  set error=0;  --é”™è¯¯æ ‡å¿—ä½åˆå§‹åŒ–ä¸º0,å³æ²¡æœ‰é”™è¯¯
+  select qoh into p_qoh from products where pid=p_id;  --ä»productsè¡¨ä¸­æŸ¥æ‰¾qohå­˜å…¥p_qoh
+  if pur_qty>p_qoh then     --è‹¥è´­ä¹°æ•°é‡å¤§äºåº“å­˜æ•°é‡ï¼Œå°†é”™è¯¯æ ‡å¿—ä½è®¾ç½®ä¸º1ï¼Œå³å‡ºç°é”™è¯¯
     set error=1; 
-  else  --·ñÔò£¬Ïòpurchases±íÖĞÔö¼Ó¹ºÂò¼ÇÂ¼
-    select original_price into price from products where pid=p_id;  --´Óproducts±íÖĞ²éÕÒoriginal_price´æÈëprice
-    select discnt_rate into rate from products where pid=p_id;      --´Óproducts±íÖĞ²éÕÒdiscnt_rate´æÈërate
-    set total=price*pur_qty*rate;  --¼ÆËã×Ü¼Û¸ñ=µ¥¼Û*¹ºÂòÊıÁ¿*ÕÛ¿Û  
+  else  --å¦åˆ™ï¼Œå‘purchasesè¡¨ä¸­å¢åŠ è´­ä¹°è®°å½•
+    select original_price into price from products where pid=p_id;  --ä»productsè¡¨ä¸­æŸ¥æ‰¾original_priceå­˜å…¥price
+    select discnt_rate into rate from products where pid=p_id;      --ä»productsè¡¨ä¸­æŸ¥æ‰¾discnt_rateå­˜å…¥rate
+    set total=price*pur_qty*rate;  --è®¡ç®—æ€»ä»·æ ¼=å•ä»·*è´­ä¹°æ•°é‡*æŠ˜æ‰£  
     insert into purchases(pur,cid,eid,pid,qty,ptime,total_price)
-    values(pur_no,c_id, e_id, p_id, pur_qty,now(),total); --½«Êı¾İ²åÈëpurchases±íÖĞ
+    values(pur_no,c_id, e_id, p_id, pur_qty,now(),total); --å°†æ•°æ®æ’å…¥purchasesè¡¨ä¸­
   end if;
 end //
 delimiter ;
 
 
-¡¾µÚÁùÌâ¡¿ //ĞŞ¸ÄµÚËÄÌâÖĞµÄtrigger after_add_purchases¡££¨¶ÔÒ»¸ö±í×î¶àÖ»ÄÜÓĞÒ»¸öÏàÍ¬µÄtrigger£©
-create TABLE messages(qoh_after_purchases int(5),qoh_increase int(5));  --´´½¨Ò»¸ö±íÓÃÓÚ´æ·Å¹ºÂòºó¿â´æºÍÔö³¤µÄ¿â´æÁ¿¡£
+
+
+
+//ä¿®æ”¹ç¬¬å››é¢˜ä¸­çš„trigger after_add_purchasesã€‚ï¼ˆå¯¹ä¸€ä¸ªè¡¨æœ€å¤šåªèƒ½æœ‰ä¸€ä¸ªç›¸åŒçš„triggerï¼‰
+create TABLE messages(qoh_after_purchases int(5),qoh_increase int(5));  --åˆ›å»ºä¸€ä¸ªè¡¨ç”¨äºå­˜æ”¾è´­ä¹°ååº“å­˜å’Œå¢é•¿çš„åº“å­˜é‡ã€‚
 
 delimiter //
 create trigger after_add_purchases
@@ -151,32 +162,35 @@ after insert on purchases for each row
 begin
   declare p_qoh int(5);
   declare p_qoh_thr int(5);
-  delete from messages;   --³õÊ¼»¯messages±íÎª¿Õ
-  insert into logs(who,time,table_name,operation,key_value)  --´´½¨logsÈÕÖ¾
+  delete from messages;   --åˆå§‹åŒ–messagesè¡¨ä¸ºç©º
+  insert into logs(who,time,table_name,operation,key_value)  --åˆ›å»ºlogsæ—¥å¿—
   values(user(),now(),'purchases','insert',new.pur); 
-  select qoh into p_qoh from products where pid=new.pid;  --»ñÈ¡¸üĞÂÇ°µÄ¿â´æÊıqoh´æÈëp_qohÖĞ
+  select qoh into p_qoh from products where pid=new.pid;  --è·å–æ›´æ–°å‰çš„åº“å­˜æ•°qohå­˜å…¥p_qohä¸­
   select qoh_threshold into p_qoh_thr from products where pid=new.pid;
-  update products set qoh=qoh-new.qty where pid=new.pid;  --¸üĞÂproductsÖĞµÄ¿â´æqoh
-  update customers set visits_made=visits_made+1 where cid=new.cid;  --¸üĞÂpurchasesÖĞµÄvisits_made
-  update customers set last_visit_time=new.ptime where cid=new.cid;  --¸üĞÂpurchasesÖĞµÄlast_visit_time
-  if (p_qoh-new.qty)<p_qoh_thr then  --Èô¿â´æÁ¿Ğ¡ÓÚ¿â´æÏÂÏŞ
-     Update products set qoh=2*p_qoh where pid=new.pid;  --Ôö¼Ó¿â´æÎª¸üĞÂÇ°µÄÁ½±¶
-     insert into messages(qoh_after_purchases,qoh_increase) values(p_qoh-new.qty,p_qoh+new.qty);  --½«¹ºÂòºó¿â´æºÍÔö³¤µÄ¿â´æÁ¿´æÈëmessages±í
+  update products set qoh=qoh-new.qty where pid=new.pid;  --æ›´æ–°productsä¸­çš„åº“å­˜qoh
+  update customers set visits_made=visits_made+1 where cid=new.cid;  --æ›´æ–°purchasesä¸­çš„visits_made
+  update customers set last_visit_time=new.ptime where cid=new.cid;  --æ›´æ–°purchasesä¸­çš„last_visit_time
+  if (p_qoh-new.qty)<p_qoh_thr then  --è‹¥åº“å­˜é‡å°äºåº“å­˜ä¸‹é™
+     Update products set qoh=2*p_qoh where pid=new.pid;  --å¢åŠ åº“å­˜ä¸ºæ›´æ–°å‰çš„ä¸¤å€
+     insert into messages(qoh_after_purchases,qoh_increase) values(p_qoh-new.qty,p_qoh+new.qty);  --å°†è´­ä¹°ååº“å­˜å’Œå¢é•¿çš„åº“å­˜é‡å­˜å…¥messagesè¡¨
   end if;
 end //
 delimiter ;
 
 
-¡¾µÚÆßÌâ¡¿
+
+
+
+
 delimiter //
-create procedure before_find_cid(in c_id varchar(4),out error int(1))--errorÎª´íÎó±êÖ¾Î»£¬Êä³öµ½Ç°¶ËÅĞ¶¨ÊÇ·ñÏÔÊ¾´íÎóÌáÊ¾
+create procedure before_find_cid(in c_id varchar(4),out error int(1))--errorä¸ºé”™è¯¯æ ‡å¿—ä½ï¼Œè¾“å‡ºåˆ°å‰ç«¯åˆ¤å®šæ˜¯å¦æ˜¾ç¤ºé”™è¯¯æç¤º
 begin
   declare c varchar(4);
-  set error=0; --´íÎó±êÖ¾Î»³õÊ¼»¯Îª0,¼´Ã»ÓĞ´íÎó
+  set error=0; --é”™è¯¯æ ‡å¿—ä½åˆå§‹åŒ–ä¸º0,å³æ²¡æœ‰é”™è¯¯
   select cid into c from customers where cid=c_id;
   if(c) then
      select * from purchases where cid=c_id;
-  else    --Èô²éÕÒ²»µ½¿Í»§cid£¬½«´íÎó±êÖ¾Î»ÉèÖÃÎª1£¬¼´³öÏÖ´íÎó
+  else    --è‹¥æŸ¥æ‰¾ä¸åˆ°å®¢æˆ·cidï¼Œå°†é”™è¯¯æ ‡å¿—ä½è®¾ç½®ä¸º1ï¼Œå³å‡ºç°é”™è¯¯
      set error = 1;
   end if;
 end //
