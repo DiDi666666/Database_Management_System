@@ -1,0 +1,184 @@
+【第一题】
+delimiter //    --改变结束符为//
+
+create procedure show_products()    --显示products表全部数据
+begin
+  select * from products;  --sql语句显示表中所有数据
+end //
+
+create procedure show_customers()   --显示customers表全部数据
+begin
+  select * from customers;
+end //
+
+create procedure show_employees()  --显示employees表全部数据
+begin
+  select * from employees;
+end //
+
+create procedure show_purchases()  --显示purchases表全部数据
+begin
+  select * from purchases;
+end //
+
+create procedure show_suppliers()  --显示suppliers表全部数据
+begin
+  select * from suppliers;
+end //
+
+create procedure show_logs()   --显示logs表全部数据
+begin
+  select * from logs;
+end //
+
+delimiter ;              --将结束符改为;
+
+
+【第二题】
+过程代码：
+delimiter //  
+
+create procedure report_sale(in prod_id varchar(4))  --显示某产品每个月的销售信息 
+begin
+  
+select pur.pid,pro.pname,
+  DATE_FORMAT(pur.ptime,'%b') as month,year(pur.ptime) as year, 
+  --DATE_FORMAT(pur.ptime,'%b')可以显示月份的英文缩写
+  sum(pur.qty) as total_quantity,
+sum(pur.total_price) as total_price,
+  
+  sum(pur.total_price)/sum(pur.qty) as average_price  --sum为求和公式
+  
+from purchases pur,products pro
+  where pur.pid= prod_id 
+and pro.pid = prod_id  --使用参数约定条件
+  group by month(pur.ptime),year(pur.ptime) 
+    --按照相同年月分组
+  order by year(pur.ptime),month(pur.ptime);
+    --按照年月排序
+end //
+
+delimiter ;
+
+
+
+【第三题】
+delimiter //
+
+create procedure add_purchases(in pur_no varchar(4),in c_id varchar(4),in e_id varchar(3),in p_id varchar(4),in pur_qty int(5))
+begin
+  declare price decimal(6,2);  --声明变量price存放从products表中查出的original_price
+  declare rate decimal(3,2);   --声明变量rate存放从products表中查出的discnt_rate
+  declare total decimal(7,2);  --声明变量total存放计算出的总价格，且该变量作为total_price插入purchases表中
+  select original_price into price from products where pid=p_id;  --从products表中查找original_price存入price
+  select discnt_rate into rate from products where pid=p_id;      --从products表中查找discnt_rate存入rate
+  set total=price*pur_qty*rate;  --计算总价格=单价*购买数量*折扣
+  insert into purchases(pur,cid,eid,pid,qty,ptime,total_price)
+  values(pur_no,c_id, e_id, p_id, pur_qty,now(),total); --将数据插入purchases表中
+end //
+
+create procedure add_products(in p_id varchar(4),in p_name varchar(15),in p_qoh int(5),in p_qoh_thr int(5),in p_price decimal(6,2),in p_rate decimal(3,2),in s_id varchar(2))
+begin
+  insert into products(pid,pname,qoh,qoh_threshold,original_price,discnt_rate,sid)
+  values(p_id,p_name,p_qoh,p_qoh_thr,p_price,p_rate,s_id); 
+end //
+
+delimiter ;
+
+
+【第四题】
+delimiter //
+
+create trigger after_insert_purchases  --创建向purchases表中插入新数据后新增日志记录的触发器
+after insert on purchases for each row
+begin
+  insert into logs(who,time,table_name,operation,key_value)
+  values(user(),now(),'purchases','insert',new.pur); --插入日志记录
+end //
+
+create trigger update_products_qoh --创建更新products表中的qoh属性后新增日志记录的触发器
+after update on products for each row
+begin
+  if old.qoh<>new.qoh then  --条件：当qoh被更新
+  insert into logs(who,time,table_name,operation,key_value)
+  values(user(),now(),'products','update',new.pid);  --插入日志记录
+  end if;
+end //
+
+create trigger update_customers_vm  --创建更新customers表中的visits_made属性后新增日志记录的触发器
+after update on customers for each row
+begin
+  if old.visits_made<>new.visits_made then  --条件：当visits_made被更新
+  insert into logs(who,time,table_name,operation,key_value)
+  values(user(),now(),'customers','update',new.cid); --插入日志记录
+  end if;
+end //
+
+delimiter ;
+
+
+【第五题】
+create TABLE error(error_hint varchar(30));  //创建临时表用于存放错误信息
+
+delimiter //
+create procedure add_purchases(in pur_no varchar(4),in c_id varchar(4),in e_id varchar(3),in p_id varchar(4),in pur_qty int(5),out error int(1)) --error为错误标志位，输出到前端判定是否显示错误提示。
+begin
+  declare p_qoh int(5);        --声明变量p_qoh存放从products表中查出的qoh
+  declare price decimal(6,2);  --声明变量price存放从products表中查出的original_price
+  declare rate decimal(3,2);   --声明变量rate存放从products表中查出的discnt_rate
+  declare total decimal(7,2);  --声明变量total存放计算出的总价格，且该变量作为total_price插入purchases表中
+  set error=0;  --错误标志位初始化为0,即没有错误
+  select qoh into p_qoh from products where pid=p_id;  --从products表中查找qoh存入p_qoh
+  if pur_qty>p_qoh then     --若购买数量大于库存数量，将错误标志位设置为1，即出现错误
+    set error=1; 
+  else  --否则，向purchases表中增加购买记录
+    select original_price into price from products where pid=p_id;  --从products表中查找original_price存入price
+    select discnt_rate into rate from products where pid=p_id;      --从products表中查找discnt_rate存入rate
+    set total=price*pur_qty*rate;  --计算总价格=单价*购买数量*折扣  
+    insert into purchases(pur,cid,eid,pid,qty,ptime,total_price)
+    values(pur_no,c_id, e_id, p_id, pur_qty,now(),total); --将数据插入purchases表中
+  end if;
+end //
+delimiter ;
+
+
+【第六题】 //修改第四题中的trigger after_add_purchases。（对一个表最多只能有一个相同的trigger）
+create TABLE messages(qoh_after_purchases int(5),qoh_increase int(5));  --创建一个表用于存放购买后库存和增长的库存量。
+
+delimiter //
+create trigger after_add_purchases
+after insert on purchases for each row
+begin
+  declare p_qoh int(5);
+  declare p_qoh_thr int(5);
+  delete from messages;   --初始化messages表为空
+  insert into logs(who,time,table_name,operation,key_value)  --创建logs日志
+  values(user(),now(),'purchases','insert',new.pur); 
+  select qoh into p_qoh from products where pid=new.pid;  --获取更新前的库存数qoh存入p_qoh中
+  select qoh_threshold into p_qoh_thr from products where pid=new.pid;
+  update products set qoh=qoh-new.qty where pid=new.pid;  --更新products中的库存qoh
+  update customers set visits_made=visits_made+1 where cid=new.cid;  --更新purchases中的visits_made
+  update customers set last_visit_time=new.ptime where cid=new.cid;  --更新purchases中的last_visit_time
+  if (p_qoh-new.qty)<p_qoh_thr then  --若库存量小于库存下限
+     Update products set qoh=2*p_qoh where pid=new.pid;  --增加库存为更新前的两倍
+     insert into messages(qoh_after_purchases,qoh_increase) values(p_qoh-new.qty,p_qoh+new.qty);  --将购买后库存和增长的库存量存入messages表
+  end if;
+end //
+delimiter ;
+
+
+【第七题】
+delimiter //
+create procedure before_find_cid(in c_id varchar(4),out error int(1))--error为错误标志位，输出到前端判定是否显示错误提示
+begin
+  declare c varchar(4);
+  set error=0; --错误标志位初始化为0,即没有错误
+  select cid into c from customers where cid=c_id;
+  if(c) then
+     select * from purchases where cid=c_id;
+  else    --若查找不到客户cid，将错误标志位设置为1，即出现错误
+     set error = 1;
+  end if;
+end //
+
+delimiter ;
